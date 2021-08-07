@@ -1,5 +1,3 @@
-from OpenGL import platform as gl_platform
-
 import moderngl as mgl
 from pyrr import Matrix44
 
@@ -109,11 +107,6 @@ def checkbox_callback():
 
 if __name__ == "__main__":
     dpg.setup_viewport()
-
-    dpg_context = gl_platform.GetCurrentContext()
-
-    print(f"DPG context: {dpg_context}")
-
     ctx = mgl.create_context()
 
     texture_id = ctx.texture((800, 800), 4)
@@ -127,6 +120,14 @@ if __name__ == "__main__":
                                     textureid=texture_id.glo,
                                     format=dpg.mvFormat_Float_rgba)
 
+    from dearpygui.logger import mvLogger
+
+    logger = mvLogger()
+    logger.log_level = 0
+
+    # dpg.add_clicked_handler(cb, 0, callback=lambda s, a, u: logger.log(f"clicked_handler: {s} '\t' {a} '\t' {u}"))
+    # dpg.add_hover_handler(cb, callback=lambda s, a, u: logger.log(f"hover_handler: {s} '\t' {a} '\t' {u}"))
+
     glp = MGLPlotter(ctx, texture_id)
 
     with dpg.window(label="Tutorial"):
@@ -136,14 +137,28 @@ if __name__ == "__main__":
 
         dpg.add_slider_float(label = "theta", min_value=-numpy.pi, max_value=numpy.pi, callback=drop_callback)
         dpg.add_checkbox(label="Radio Button1", source=checked, callback=checkbox_callback)
+
+        def clicked_callback(sender, app_data, user_data):
+            logger.log_error(f"[{sender}]: {app_data}, {user_data}")
+            print(f"[{sender}]: {app_data}, {user_data}")
+
+        img_widget = dpg.add_image(image_id)
+        with dpg.handler_registry():
+            dpg.add_clicked_handler(img_widget, label="3D clicked", user_data = "click", callback=clicked_callback)
+            dpg.add_mouse_down_handler(label="3D dragged", user_data = "down", callback=clicked_callback)
+            # dpg.add_hover_handler(img_widget, user_data="hover", callback=clicked_callback)
+            # dpg.add_mouse_release_handler(img_widget, user_data="release", callback=clicked_callback)
+            # dpg.add_mouse_move_handler(img_widget, user_data="move", callback=clicked_callback)
+
         with dpg.drawlist(width=800, height=800): # or you could use dpg.add_drawlist and set parents manually
-            dpg.draw_image(image_id, (0, 0), (800, 800))
+            # dpg.draw_image(image_id, (0, 0), (800, 800))
             dpg.draw_line((10, 10), (100, 100), color=(255, 0, 0, 255), thickness=5)
             dpg.draw_text((300, 300), "Origin", color=(250, 250, 250, 255), size=45)
             dpg.draw_arrow((50, 70), (400, 265), color=(0, 200, 255), thickness=1, size=40)
 
     # show_demo()
-    dpg.show_implot_demo()
+    from dearpygui.demo import show_demo
+    show_demo()
 
     while dpg.is_dearpygui_running():
         glp.paintGL()
